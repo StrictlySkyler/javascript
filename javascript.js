@@ -61,18 +61,22 @@ const register = (lanes, users, harbors, shipments) => {
   return { name, pkgs };
 };
 
-const update = (lane, values) => true;
+const update = (lane, values) => {
+  console.log(`No validation performed for lane ${lane} with values ${values}`);
+  return true;
+};
 
 const work = (lane, manifest) => {
   const script = manifest['script-javascript'];
-  const shipment = Shipments.findOne(manifest.shipment_id)
+  const shipment = Shipments.findOne(manifest.shipment_id);
   let exit_code = 0;
   let result;
 
   try {
     result = eval(script);
     shipment.stdout.push(result);
-  } catch (e) {
+  }
+  catch (e) {
     console.error(e);
     exit_code = 1;
     result = `${e.name}: ${e.message}`;
@@ -93,9 +97,9 @@ const codemirror_mode_url = `${cdn}mode/javascript/javascript.min.js`;
 const event_handlers = () => {
   let code;
   const enable_editor = document.getElementById('enable-editor');
-  const disable_editor = document.getElementById('disable-editor');
-  const form = enable_editor.closest('form');
+  if (! enable_editor) return;
 
+  const form = enable_editor.closest('form');
   form.addEventListener('click', (e) => {
     if (e.target.id == 'enable-editor') {
       e.preventDefault();
@@ -118,6 +122,8 @@ const event_handlers = () => {
       document.getElementById('enable-editor').style.display = 'block';
       return code.toTextArea();
     }
+
+    return true;
   });
 };
 
@@ -145,7 +151,7 @@ constraints = () => ({
     {
       id: 'codemirror-init',
       text: `(${(event_handlers.toString())})();`
-    }
+    },
   ],
 });
 

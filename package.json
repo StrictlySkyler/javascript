@@ -1,0 +1,19 @@
+{
+  "name": "harbormaster-javascript",
+  "version": "1.0.0",
+  "description": "Execute arbitrary JS!",
+  "main": "javascript.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/StrictlySkyler/harbormaster-javascript.git"
+  },
+  "author": "Skyler Brungardt <skyler.brungardt@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/StrictlySkyler/harbormaster-javascript/issues"
+  },
+  "homepage": "https://github.com/StrictlySkyler/harbormaster-javascript#readme"
+}
