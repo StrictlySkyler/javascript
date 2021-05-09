@@ -1,34 +1,40 @@
 const name = 'javascript';
 const pkgs = [];
-const textarea_styles = `
+const textarea_styles = /*html*/`
   <style>
     .script-field {
       font-family: monospace;
       resize: vertical;
+      white-space: break-spaces;
     }
 
-    #disable-editor {
+    #disable-rich-editor {
       display: none;
     }
   </style>
 `;
-const resize_textarea_script_tag = `
+const resize_textarea_script_tag = /*html*/`
   <script>
-    $text = $('#script-javascript');
-    $text.on('input', function () {
-      this.style.height = this.scrollHeight + 'px';
-    }).css('height', $text[0].scrollHeight + 10 + 'px');
+    (function () {
+
+      const $text = $('#script-javascript');
+      debugger
+      $text.on('input', function () {
+        debugger
+        this.style.height = this.scrollHeight + 'px';
+      }).css('height', $text[0].scrollHeight + 10 + 'px');
+    })();
   </script>
 `;
 let Shipments;
 
-const render_input = (values = {}) => `
+const render_input = (values = {}) => /*html*/`
   ${textarea_styles}
   ${resize_textarea_script_tag}
-  <button id=enable-editor class="button hollow">
+  <button id=enable-rich-editor class="enable-rich-editor harbor-button">
     Enable Rich Editor
   </button>
-  <button id=disable-editor class="button hollow">
+  <button id=disable-rich-editor class="disable-rich-editor harbor-button">
     Disable Rich Editor
   </button>
   <label>Script to execute:
@@ -43,16 +49,16 @@ const render_input = (values = {}) => `
   </label>
 `;
 
-const render_work_preview = (manifest) => `
+const render_work_preview = (manifest) => /*html*/`
   ${textarea_styles}
   ${resize_textarea_script_tag}
   <figure>
     <figcaption>The following script will be executed:</figcaption>
-    <textarea
+    <code
       id=script-javascript
       class="script-javascript script-field"
       disabled
-    >${manifest['script-javascript']}</textarea>
+    >${manifest['script-javascript']}</code>
   </figure>
 `;
 
@@ -61,8 +67,11 @@ const register = (lanes, users, harbors, shipments) => {
   return { name, pkgs };
 };
 
-const update = (lane, values) => {
-  console.log(`No validation performed for lane ${lane} with values ${values}`);
+const update = (lane, value) => {
+  console.log(
+    `No validation performed for lane "${lane.name}" with value: `, 
+    value
+  );
   return true;
 };
 
@@ -71,16 +80,17 @@ const work = (lane, manifest) => {
   const shipment = Shipments.findOne(manifest.shipment_id);
   let exit_code = 0;
   let result;
+  let key = new Date();
 
   try {
     result = eval(script);
-    shipment.stdout.push(result);
+    shipment.stdout[key] = result;
   }
   catch (e) {
     console.error(e);
     exit_code = 1;
     result = `${e.name}: ${e.message}`;
-    shipment.stderr.push(result);
+    shipment.stderr[key] = result;
   }
 
   Shipments.update(shipment._id, shipment);
@@ -88,7 +98,7 @@ const work = (lane, manifest) => {
   return manifest;
 };
 
-const cdn = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.40.0/';
+const cdn = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.0/';
 const codemirror_script_url = `${cdn}codemirror.min.js`;
 const codemirror_style_url = `${cdn}codemirror.min.css`;
 const codemirror_theme_url = `${cdn}theme/solarized.min.css`;
@@ -96,31 +106,41 @@ const codemirror_mode_url = `${cdn}mode/javascript/javascript.min.js`;
 
 const event_handlers = () => {
   let code;
-  const enable_editor = document.getElementById('enable-editor');
-  if (! enable_editor) return;
 
-  const form = enable_editor.closest('form');
-  form.addEventListener('click', (e) => {
-    if (e.target.id == 'enable-editor') {
+  document.addEventListener('click', (e) => {
+    if (e.target.id == 'enable-rich-editor') {
       e.preventDefault();
       e.target.style.display = 'none';
-      document.getElementById('disable-editor').style.display = 'block';
-      return code = CodeMirror.fromTextArea(
+      document.getElementById('disable-rich-editor').style.display = 'block';
+      code = CodeMirror.fromTextArea(
         document.getElementById('script-javascript'),
         {
           lineNumbers: true,
           tabSize: 2,
           mode: 'javascript',
-          theme: 'solarized',
+          theme: 'solarized dark',
         }
       );
+      return code;
     }
 
-    if (e.target.id == 'disable-editor') {
+    if (e.target.id == 'disable-rich-editor') {
       e.preventDefault();
       e.target.style.display = 'none';
-      document.getElementById('enable-editor').style.display = 'block';
-      return code.toTextArea();
+      document.getElementById('enable-rich-editor').style.display = 'block';
+      code.toTextArea();
+      code = null;
+      return code;
+    }
+
+    if (
+      e.target.id == 'harbor-save-button' 
+      && document.getElementById('disable-rich-editor')
+    ) {
+      document.getElementById('enable-rich-editor').style.display = 'block';
+      document.getElementById('disable-rich-editor').style.display = 'none';
+      code.toTextArea();
+      code = null;
     }
 
     return true;
