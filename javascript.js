@@ -93,6 +93,8 @@ const work = (lane, manifest) => {
     shipment.stderr[key] = result;
   }
 
+  if (!result) exit_code = 1;
+
   Shipments.update(shipment._id, shipment);
   H.end_shipment(lane, exit_code, manifest);
   return manifest;
