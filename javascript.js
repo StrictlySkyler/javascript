@@ -18,9 +18,7 @@ const resize_textarea_script_tag = /*html*/`
     (function () {
 
       const $text = $('#script-javascript');
-      debugger
       $text.on('input', function () {
-        debugger
         this.style.height = this.scrollHeight + 'px';
       }).css('height', $text[0].scrollHeight + 10 + 'px');
     })();
