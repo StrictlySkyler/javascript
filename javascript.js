@@ -25,10 +25,24 @@ const resize_textarea_script_tag = /*html*/`
   </script>
 `;
 let Shipments;
+const placeholder_example = /*js*/`(async () => {
+  const browser = await require('puppeteer').launch();
+  const page = await browser.newPage();
+  await page.goto('https://github.com/harbormaster-public/harbormaster/tags');
+  const tag_link = await page.$('.Box-row a');
+  const tag_text = await (
+    await tag_link.getProperty('textContent')
+  ).jsonValue();
 
+  return tag_text; 
+})`;
+
+  
 const render_input = (values = {}) => /*html*/`
   ${textarea_styles}
   ${resize_textarea_script_tag}
+  <p>Promises can be wrapped in an async anonymous function to return values.  Currently supports only CommonJS-style modules.</p>
+  <hr>
   <button id=enable-rich-editor class="enable-rich-editor harbor-button">
     Enable Rich Editor
   </button>
@@ -40,7 +54,7 @@ const render_input = (values = {}) => /*html*/`
       id=script-javascript
       name=script-javascript
       class="script-javascript script-field"
-      placeholder="(() => 'Hello world')();"
+      placeholder="${placeholder_example}"
       required
     >${values['script-javascript'] || ''}</textarea>
     <div id=rich-editor></div>
@@ -73,7 +87,7 @@ const update = (lane, value) => {
   return true;
 };
 
-const work = (lane, manifest) => {
+const work = async (lane, manifest) => {
   const script = manifest['script-javascript'];
   const shipment = Shipments.findOne(manifest.shipment_id);
   let exit_code = 0;
@@ -81,7 +95,7 @@ const work = (lane, manifest) => {
   let key = new Date();
 
   try {
-    result = eval(script);
+    result = await eval(script);
     shipment.stdout[key] = result;
   }
   catch (e) {
@@ -92,11 +106,14 @@ const work = (lane, manifest) => {
   }
 
   if (!result) exit_code = 1;
-
-  Shipments.update(shipment._id, shipment);
-  H.end_shipment(lane, exit_code, manifest);
+  done(lane, shipment, exit_code, manifest);
   return manifest;
 };
+
+const done = H.bind((lane, shipment, exit_code, manifest) => {
+  Shipments.update(shipment._id, shipment);
+  H.end_shipment(lane, exit_code, manifest);
+});
 
 const cdn = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.61.0/';
 const codemirror_script_url = `${cdn}codemirror.min.js`;
