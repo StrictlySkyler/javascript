@@ -104,6 +104,7 @@ const work = async (lane, manifest) => {
     result = `${e.name}: ${e.message}`;
     shipment.stderr[key] = result;
   }
+  manifest.result = result;
 
   if (!result) exit_code = 1;
   done(lane, shipment, exit_code, manifest);
@@ -124,44 +125,47 @@ const codemirror_mode_url = `${cdn}mode/javascript/javascript.min.js`;
 const event_handlers = () => {
   let code;
 
-  document.addEventListener('click', (e) => {
-    if (e.target.id == 'enable-rich-editor') {
-      e.preventDefault();
-      e.target.style.display = 'none';
-      document.getElementById('disable-rich-editor').style.display = 'block';
-      code = CodeMirror.fromTextArea(
-        document.getElementById('script-javascript'),
-        {
-          lineNumbers: true,
-          tabSize: 2,
-          mode: 'javascript',
-          theme: 'solarized dark',
-        }
-      );
-      return code;
-    }
+  if (!document.javascript_harbor_rich_editor_attached) {
+    document.javascript_harbor_rich_editor_attached = true;
+    document.addEventListener('click', (e) => {
+      if (e.target.id == 'enable-rich-editor') {
+        e.preventDefault();
+        e.target.style.display = 'none';
+        document.getElementById('disable-rich-editor').style.display = 'block';
+        code = CodeMirror.fromTextArea(
+          document.getElementById('script-javascript'),
+          {
+            lineNumbers: true,
+            tabSize: 2,
+            mode: 'javascript',
+            theme: 'solarized dark',
+          }
+        );
+        return code;
+      }
 
-    if (e.target.id == 'disable-rich-editor') {
-      e.preventDefault();
-      e.target.style.display = 'none';
-      document.getElementById('enable-rich-editor').style.display = 'block';
-      code.toTextArea();
-      code = null;
-      return code;
-    }
+      if (e.target.id == 'disable-rich-editor') {
+        e.preventDefault();
+        e.target.style.display = 'none';
+        document.getElementById('enable-rich-editor').style.display = 'block';
+        code.toTextArea();
+        code = null;
+        return code;
+      }
 
-    if (
-      e.target.id == 'harbor-save-button' 
-      && document.getElementById('disable-rich-editor')
-    ) {
-      document.getElementById('enable-rich-editor').style.display = 'block';
-      document.getElementById('disable-rich-editor').style.display = 'none';
-      code.toTextArea();
-      code = null;
-    }
+      if (
+        e.target.id == 'harbor-save-button' 
+        && document.getElementById('disable-rich-editor')
+      ) {
+        document.getElementById('enable-rich-editor').style.display = 'block';
+        document.getElementById('disable-rich-editor').style.display = 'none';
+        code.toTextArea();
+        code = null;
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }
 };
 
 constraints = () => ({
