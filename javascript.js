@@ -34,14 +34,17 @@ const placeholder_example = /*js*/`(async () => {
     await tag_link.getProperty('textContent')
   ).jsonValue();
 
-  return tag_text; 
+  return tag_text;
 })`;
 
-  
+
 const render_input = (values = {}) => /*html*/`
   ${textarea_styles}
   ${resize_textarea_script_tag}
-  <p>Promises can be wrapped in an async anonymous function to return values.  Currently supports only CommonJS-style modules.</p>
+  <p>
+    Promises can be wrapped in an async anonymous function to return values.
+    Currently supports only CommonJS-style modules.
+  </p>
   <hr>
   <button id=enable-rich-editor class="enable-rich-editor harbor-button">
     Enable Rich Editor
@@ -81,7 +84,7 @@ const register = (lanes, users, harbors, shipments) => {
 
 const update = (lane, value) => {
   console.log(
-    `No validation performed for lane "${lane.name}" with value: `, 
+    `No validation performed for lane "${lane.name}" with value: `,
     value
   );
   return true;
@@ -89,13 +92,13 @@ const update = (lane, value) => {
 
 const work = async (lane, manifest) => {
   const script = manifest['script-javascript'];
-  const shipment = Shipments.findOne(manifest.shipment_id);
+  const shipment = await Shipments.findOneAsync(manifest.shipment_id);
   let exit_code = 0;
   let result;
   let key = new Date();
 
   try {
-    result = await eval(script);
+    result = JSON.stringify(await eval(script), null, 2);
     shipment.stdout[key] = result;
   }
   catch (e) {
@@ -106,13 +109,12 @@ const work = async (lane, manifest) => {
   }
   manifest.result = result;
 
-  if (!result) exit_code = 1;
   done(lane, shipment, exit_code, manifest);
-  return manifest;
+  return result;
 };
 
-const done = H.bind((lane, shipment, exit_code, manifest) => {
-  Shipments.update(shipment._id, shipment);
+const done = H.bind(async (lane, shipment, exit_code, manifest) => {
+  await Shipments.updateAsync(shipment._id, shipment);
   H.end_shipment(lane, exit_code, manifest);
 });
 
@@ -148,18 +150,18 @@ const event_handlers = () => {
         e.preventDefault();
         e.target.style.display = 'none';
         document.getElementById('enable-rich-editor').style.display = 'block';
-        code.toTextArea();
+        if (code) code.toTextArea();
         code = null;
         return code;
       }
 
       if (
-        e.target.id == 'harbor-save-button' 
+        e.target.id == 'harbor-save-button'
         && document.getElementById('disable-rich-editor')
       ) {
         document.getElementById('enable-rich-editor').style.display = 'block';
         document.getElementById('disable-rich-editor').style.display = 'none';
-        code.toTextArea();
+        if (code) code.toTextArea();
         code = null;
       }
 
@@ -168,7 +170,7 @@ const event_handlers = () => {
   }
 };
 
-constraints = () => ({
+const constraints = () => ({
   global: [],
   edit_lane: [
     {
@@ -191,7 +193,7 @@ constraints = () => ({
     },
     {
       id: 'codemirror-init',
-      text: `(${(event_handlers.toString())})();`
+      text: `(${(event_handlers.toString())})();`,
     },
   ],
 });
