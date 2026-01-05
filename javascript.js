@@ -98,7 +98,9 @@ const work = async (lane, manifest) => {
   let key = new Date();
 
   try {
-    result = JSON.stringify(await eval(script), null, 2);
+    const value = await eval(script);
+    exit_code = value ? 0 : 1;
+    result = JSON.stringify(value, null, 2);
     shipment.stdout[key] = result;
   }
   catch (e) {
